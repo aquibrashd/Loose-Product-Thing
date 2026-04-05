@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loose Item Inventory — Shwapno WMS RFC</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0f0e;
+  --bg2:#161714;
+  --bg3:#1e1f1c;
+  --card:#1a1b18;
+  --border:#2a2b27;
+  --border2:#353630;
+  --text:#e8e6df;
+  --muted:#8a8880;
+  --hint:#5a5955;
+  --accent:#b8e04a;
+  --accent2:#4ae0b8;
+  --accent3:#e0804a;
+  --thing:#4ae0b8;
+  --event:#b4a9f0;
+  --newthing:#f0c44a;
+  --font-display:'Fraunces',serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --radius:10px;
+  --radius-lg:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.65;min-height:100vh}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;background:rgba(14,15,14,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;gap:0;height:56px}
+.nav-logo{font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--accent);margin-right:32px;white-space:nowrap;letter-spacing:-.02em}
+.nav-logo span{color:var(--muted);font-weight:300}
+.nav-tabs{display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.tab-btn{background:none;border:none;color:var(--muted);font-family:var(--font-body);font-size:13px;font-weight:400;padding:0 16px;height:56px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:color .18s,border-color .18s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-badge{display:inline-block;background:var(--accent);color:#0e0f0e;font-size:10px;font-weight:500;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle}
+
+/* ── LAYOUT ── */
+.tab-panel{display:none;max-width:960px;margin:0 auto;padding:48px 32px 80px}
+.tab-panel.active{display:block}
+
+/* ── HERO ── */
+.hero{padding:64px 32px 56px;max-width:960px;margin:0 auto}
+.hero-kicker{font-family:var(--font-mono);font-size:12px;color:var(--accent2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px}
+.hero-title{font-family:var(--font-display);font-size:clamp(36px,5vw,62px);font-weight:700;line-height:1.08;letter-spacing:-.03em;color:var(--text);margin-bottom:20px}
+.hero-title em{font-style:italic;color:var(--accent)}
+.hero-sub{font-size:17px;color:var(--muted);max-width:600px;line-height:1.7;margin-bottom:36px}
+.hero-chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;border:1px solid var(--border2);font-size:12px;color:var(--muted)}
+.chip-dot{width:7px;height:7px;border-radius:50%}
+.chip-dot.green{background:var(--thing)}
+.chip-dot.purple{background:var(--event)}
+.chip-dot.amber{background:var(--newthing)}
+.chip-dot.red{background:var(--accent3)}
+
+/* ── SECTION LABELS ── */
+.section-label{font-family:var(--font-mono);font-size:11px;color:var(--hint);letter-spacing:.1em;text-transform:uppercase;margin-bottom:24px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+h2{font-family:var(--font-display);font-size:26px;font-weight:500;letter-spacing:-.02em;color:var(--text);margin-bottom:8px}
+h3{font-family:var(--font-display);font-size:18px;font-weight:500;letter-spacing:-.01em;color:var(--text);margin-bottom:6px}
+p{color:var(--muted);margin-bottom:14px;line-height:1.7}
+p:last-child{margin-bottom:0}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px}
+.card-sm{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:640px){.card-grid{grid-template-columns:1fr}}
+.card-accent{border-color:var(--accent);border-left-width:3px}
+.card-thing{border-left:3px solid var(--thing)}
+.card-event{border-left:3px solid var(--event)}
+.card-new{border-left:3px solid var(--newthing)}
+.card-warn{border-left:3px solid var(--accent3)}
+
+/* ── TAGS ── */
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;margin:0 3px 4px 0;font-family:var(--font-mono)}
+.tag-thing{background:rgba(74,224,184,.12);color:var(--thing);border:1px solid rgba(74,224,184,.25)}
+.tag-event{background:rgba(180,169,240,.12);color:var(--event);border:1px solid rgba(180,169,240,.25)}
+.tag-new{background:rgba(240,196,74,.12);color:var(--newthing);border:1px solid rgba(240,196,74,.25)}
+.tag-none{background:rgba(138,136,128,.1);color:var(--muted);border:1px solid var(--border)}
+.tag-warn{background:rgba(224,128,74,.12);color:var(--accent3);border:1px solid rgba(224,128,74,.25)}
+
+/* ── RULE PILL ── */
+.rule-box{background:rgba(184,224,74,.06);border:1px solid rgba(184,224,74,.2);border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:14px;color:var(--text)}
+.rule-box strong{color:var(--accent);font-weight:500}
+
+/* ── COMPARISON TABLE ── */
+.cmp-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px}
+.cmp-table th{text-align:left;padding:10px 14px;font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--hint);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2)}
+.cmp-table td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--muted);line-height:1.55}
+.cmp-table td:first-child{color:var(--text);font-weight:400;white-space:nowrap}
+.cmp-table tr:last-child td{border-bottom:none}
+.cmp-table .cg{color:var(--event)}
+.cmp-table .loose{color:var(--thing)}
+.cmp-table tr:hover td{background:rgba(255,255,255,.02)}
+
+/* ── DB SCHEMA ── */
+.schema-table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px;margin-bottom:24px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.schema-table .tbl-header{background:var(--bg3);padding:10px 14px;font-size:13px;font-weight:500;color:var(--accent2);letter-spacing:.02em;border-bottom:1px solid var(--border)}
+.schema-table th{text-align:left;padding:8px 14px;font-size:11px;color:var(--hint);background:var(--bg2);border-bottom:1px solid var(--border)}
+.schema-table td{padding:8px 14px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+.schema-table td:first-child{color:var(--text)}
+.schema-table td.pk{color:var(--newthing)}
+.schema-table td.fk{color:var(--event)}
+.schema-table td.new-col{color:var(--thing)}
+.schema-table tr:last-child td{border-bottom:none}
+.schema-table tr:hover td{background:rgba(255,255,255,.02)}
+
+/* ── CODE BLOCK ── */
+.code-block{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;font-family:var(--font-mono);font-size:12px;color:#b8e0b8;line-height:1.7;overflow-x:auto;margin-bottom:16px;white-space:pre}
+.code-block .cm{color:var(--hint)}
+.code-block .ck{color:var(--event)}
+.code-block .cv{color:var(--thing)}
+.code-block .cn{color:var(--newthing)}
+
+/* ── STEPPER ── */
+.stepper{max-width:100%}
+.step-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.step-li{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.step-ld{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.step-nav{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.step-dot{width:9px;height:9px;border-radius:50%;background:var(--border2);cursor:pointer;border:none;padding:0;flex-shrink:0;transition:background .2s}
+.step-dot.on{background:var(--accent)}
+.step-ctr{font-size:12px;color:var(--hint);margin-left:auto}
+.step-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.step-title{font-family:var(--font-display);font-size:17px;font-weight:500;color:var(--text);margin-bottom:3px}
+.step-op{font-size:13px;color:var(--muted);margin-bottom:12px}
+.sec-lbl{font-family:var(--font-mono);font-size:10px;color:var(--hint);letter-spacing:.08em;text-transform:uppercase;margin:14px 0 8px}
+.db-rows{display:flex;gap:8px;flex-wrap:wrap}
+.db-row{border-radius:8px;padding:10px 13px;font-size:12px;flex:1;min-width:148px;font-family:var(--font-mono)}
+.db-row.rt{border:1px solid rgba(74,224,184,.35);background:rgba(74,224,184,.06)}
+.db-row.re{border:1px solid rgba(180,169,240,.35);background:rgba(180,169,240,.06)}
+.db-row.rn{border:1px solid rgba(240,196,74,.35);background:rgba(240,196,74,.06)}
+.db-row .rid{font-weight:500;font-size:13px;color:var(--text);margin-bottom:5px}
+.db-row .rf{color:var(--muted);line-height:1.7}
+.db-row .rs{margin-top:6px;font-weight:500;font-size:11px}
+.s-rx{color:var(--thing)}.s-dp{color:var(--newthing)}.s-ac{color:#60a5fa}
+.s-sl{color:var(--accent3)}.s-tm{color:var(--newthing)}.s-td{color:var(--muted)}.s-av{color:var(--thing)}
+.step-note{font-size:13px;color:var(--muted);margin-top:14px;padding:10px 14px;border-left:2px solid var(--border2)}
+.step-edge{font-size:13px;color:var(--muted);margin-top:10px;padding:10px 14px;background:var(--bg3);border-radius:var(--radius)}
+.step-edge-lbl{font-weight:500;color:var(--accent3)}
+.step-btns{display:flex;gap:8px;margin-top:14px}
+.step-btns button{font-size:13px;padding:7px 20px;border:1px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text);cursor:pointer;font-family:var(--font-body);transition:background .15s}
+.step-btns button:hover{background:var(--bg3)}
+.step-btns button:disabled{opacity:.3;cursor:default}
+
+/* ── SCALABILITY ── */
+.scale-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+@media(max-width:640px){.scale-grid{grid-template-columns:1fr}}
+.scale-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.scale-num{font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--accent);letter-spacing:-.03em;line-height:1}
+.scale-label{font-size:12px;color:var(--hint);margin-top:4px;margin-bottom:10px;font-family:var(--font-mono)}
+.scale-desc{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* ── CHECKLIST ── */
+.checklist{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.checklist li{display:flex;gap:12px;font-size:14px;color:var(--muted);line-height:1.6}
+.check-icon{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:1px}
+.check-icon.p1{background:rgba(224,128,74,.15);color:var(--accent3)}
+.check-icon.p2{background:rgba(180,169,240,.15);color:var(--event)}
+.check-icon.p3{background:rgba(74,224,184,.15);color:var(--thing)}
+.check-label{color:var(--text);font-weight:500}
+
+/* ── FLOW DIAGRAM ── */
+.flow-wrap{overflow-x:auto;margin-bottom:24px}
+.flow-wrap svg{min-width:500px}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--border);margin:32px 0}
+
+/* ── HIGHLIGHT BOX ── */
+.hl-box{background:linear-gradient(135deg,rgba(184,224,74,.06),rgba(74,224,184,.04));border:1px solid rgba(184,224,74,.18);border-radius:var(--radius-lg);padding:22px 24px;margin-bottom:24px}
+.hl-box-title{font-family:var(--font-display);font-size:16px;font-weight:500;color:var(--accent);margin-bottom:8px}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:28px 32px;text-align:center;font-size:12px;color:var(--hint);font-family:var(--font-mono)}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.tab-panel.active{animation:fadeUp .25s ease}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Shwapno <span>WMS</span></div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
+    <button class="tab-btn" onclick="showTab('operations')">Operations <span class="nav-badge">stepper</span></button>
+    <button class="tab-btn" onclick="showTab('cg-vs-loose')">CG vs Loose</button>
+    <button class="tab-btn" onclick="showTab('database')">Database</button>
+    <button class="tab-btn" onclick="showTab('edge-cases')">Edge Cases</button>
+    <button class="tab-btn" onclick="showTab('scalability')">Scalability</button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TAB: OVERVIEW -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tab-overview" class="tab-panel active">
+  <div class="hero" style="padding:48px 0 40px">
+    <div class="hero-kicker">RFC — Inventory Architecture</div>
+    <h1 class="hero-title">Loose &amp; perishable items<br>in the <em>Thing system</em></h1>
+    <p class="hero-sub">This document proposes how to extend Shwapno's existing Thing-based WMS to handle loose commodities (rice, oil) and perishable items (Rui fish, tomato, meat) — without breaking the current CG item architecture.</p>
+    <div class="hero-chips">
+      <div class="chip"><div class="chip-dot green"></div>Thing row — batch identity</div>
+      <div class="chip"><div class="chip-dot purple"></div>Event row — every movement</div>
+      <div class="chip"><div class="chip-dot amber"></div>New Thing — transmutation output</div>
+      <div class="chip"><div class="chip-dot red"></div>Wastage / loss event</div>
+    </div>
+  </div>
+
+  <div class="section-label">The problem</div>
+  <div class="card">
+    <h2>Why loose items break the current system</h2>
+    <p>Today, 1 Coca-Cola can = 1 Thing row. The system creates N rows for N units. This works perfectly for discrete CG items because each unit has a fixed, indivisible size.</p>
+    <p>For loose items like Rui fish (sold by kg, cut per customer request) or rice (any decimal quantity), there is no fixed atomic unit. A customer can ask for 3.25 kg or 0.875 kg. A fish can be cut into heads, fillets, tails. Creating one row per gram is impractical. Creating one row per kg causes edge cases with every decimal sale.</p>
+  </div>
+
+  <div class="section-label" style="margin-top:32px">The solution</div>
+  <div class="hl-box">
+    <div class="hl-box-title">One batch = one Thing. Every movement = one Event.</div>
+    <p style="color:var(--muted);font-size:14px">When 99.5 kg of Rui fish arrives from a supplier, the system creates exactly <strong style="color:var(--thing)">one Thing row</strong> (the batch identity). Every subsequent operation — packing, transfer, transit loss, sale, wastage, transmutation — appends an <strong style="color:var(--event)">Event row</strong> to the log. Current stock at any location is always derived by summing events. The Thing row itself is never modified after creation (except state).</p>
+  </div>
+
+  <div class="rule-box">
+    <strong>Core rule:</strong> A new Thing is created ONLY when goods arrive from an external supplier (Purchase Order). Internal movements — DC to outlet, outlet to outlet — never create new Things. They only create events on the existing Thing.
+  </div>
+
+  <div class="card-grid" style="margin-top:24px">
+    <div class="card card-thing">
+      <h3>When a Thing row is created</h3>
+      <p style="font-size:13px">Only at GRN — when goods arrive from a supplier PO. Each unique batch arrival = one Thing. For transmutation outputs, new Things are born (one per output SKU).</p>
+    </div>
+    <div class="card card-event">
+      <h3>When an Event row is created</h3>
+      <p style="font-size:13px">For every movement: DC packing, outlet receiving, transit loss, customer sale, wastage, adjustment, return, transmutation in/out. One operation = one event row.</p>
+    </div>
+    <div class="card card-new">
+      <h3>Transmutation</h3>
+      <p style="font-size:13px">Whole fish → heads + fillets + tails. The original Thing gets a TRANSMUTATION_OUT event. New Things are born for each output SKU. A TX record bridges input to outputs.</p>
+    </div>
+    <div class="card card-warn">
+      <h3>What never changes</h3>
+      <p style="font-size:13px">The Thing row's original_qty is immutable. Stock is always calculated, never stored. Corrections are new ADJUSTMENT events — no row is ever edited or deleted.</p>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:32px">Scope of change</div>
+  <div class="card">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--hint);margin-bottom:8px">UNCHANGED</div>
+        <p style="font-size:13px">CG item flow, existing Thing table structure, state machine logic, all current events, PO and transfer order tables</p>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--hint);margin-bottom:8px">NEW COLUMNS</div>
+        <p style="font-size:13px">is_loose, original_qty, unit on things table. parent_tx_id for transmutation traceability.</p>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--hint);margin-bottom:8px">NEW TABLES</div>
+        <p style="font-size:13px">thing_quantity_events, transmutations, transmutation_inputs, transmutation_outputs, thing_stock_snapshot</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TAB: OPERATIONS STEPPER -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tab-operations" class="tab-panel">
+  <div class="section-label">Step-by-step walkthrough</div>
+  <h2 style="margin-bottom:6px">100 kg Rui Fish — every operation</h2>
+  <p style="margin-bottom:28px">Click through each step to see exactly what gets written to the database at the Thing level.</p>
+
+  <div class="stepper">
+    <div class="step-legend">
+      <div class="step-li"><div class="step-ld" style="background:var(--thing)"></div>Thing row created/updated</div>
+      <div class="step-li"><div class="step-ld" style="background:var(--event)"></div>Event row created</div>
+      <div class="step-li"><div class="step-ld" style="background:var(--newthing)"></div>New Thing born (transmutation)</div>
+    </div>
+    <div class="step-nav">
+      <div id="dots" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      <span class="step-ctr" id="ctr"></span>
+    </div>
+    <div id="step-content"></div>
+    <div class="step-btns">
+      <button id="bp" onclick="go(-1)">← Prev</button>
+      <button id="bn" onclick="go(1)">Next →</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-label">Full event log — Thing 101</div>
+  <p style="margin-bottom:16px">Every event for the 99.5 kg Rui Fish batch, in order. This is the complete audit trail.</p>
+  <div class="card" style="overflow-x:auto">
+    <table class="schema-table" style="margin-bottom:0">
+      <thead>
+        <tr><th>Event ID</th><th>Type</th><th>Qty</th><th>Dir</th><th>Location</th><th>Ref</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>E-001</td><td style="color:var(--thing)">RECEIVED</td><td>99.5 kg</td><td>IN</td><td>DC-BIN-01</td><td>PO-001</td></tr>
+        <tr><td>E-002</td><td style="color:var(--event)">PACKED_OUT</td><td>60 kg</td><td>OUT</td><td>DC → Outlet 1</td><td>TO-001</td></tr>
+        <tr><td>E-003</td><td style="color:var(--event)">PACKED_OUT</td><td>37 kg</td><td>OUT</td><td>DC → Outlet 2</td><td>TO-002</td></tr>
+        <tr><td>E-004</td><td style="color:var(--accent3)">WASTAGE</td><td>2 kg</td><td>OUT</td><td>DC-BIN-01</td><td>—</td></tr>
+        <tr><td>E-005</td><td style="color:var(--thing)">RECEIVED_IN</td><td>58 kg</td><td>IN</td><td>Outlet 1</td><td>TO-001</td></tr>
+        <tr><td>E-006</td><td style="color:var(--accent3)">TRANSIT_LOSS</td><td>2 kg</td><td>OUT</td><td>DC → Outlet 1</td><td>TO-001</td></tr>
+        <tr><td>E-007</td><td style="color:var(--thing)">RECEIVED_IN</td><td>36.5 kg</td><td>IN</td><td>Outlet 2</td><td>TO-002</td></tr>
+        <tr><td>E-008</td><td style="color:var(--accent3)">TRANSIT_LOSS</td><td>0.5 kg</td><td>OUT</td><td>DC → Outlet 2</td><td>TO-002</td></tr>
+        <tr><td>E-009</td><td style="color:var(--accent3)">SOLD</td><td>3.25 kg</td><td>OUT</td><td>Outlet 1</td><td>SO-001</td></tr>
+        <tr><td>E-010</td><td style="color:var(--accent3)">SOLD</td><td>1.8 kg</td><td>OUT</td><td>Outlet 1</td><td>SO-002</td></tr>
+        <tr><td>E-011</td><td style="color:var(--accent3)">SOLD</td><td>0.5 kg</td><td>OUT</td><td>Outlet 1</td><td>SO-003</td></tr>
+        <tr><td>E-012</td><td style="color:var(--newthing)">TRANSMUTATION_OUT</td><td>20 kg</td><td>OUT</td><td>Outlet 1</td><td>TX-001</td></tr>
+        <tr><td>E-013</td><td style="color:var(--newthing)">TRANSMUTATION_IN</td><td>4 kg</td><td>IN</td><td>Outlet 1</td><td>TX-001</td></tr>
+        <tr><td>E-014</td><td style="color:var(--newthing)">TRANSMUTATION_IN</td><td>10 kg</td><td>IN</td><td>Outlet 1</td><td>TX-001</td></tr>
+        <tr><td>E-015</td><td style="color:var(--newthing)">TRANSMUTATION_IN</td><td>3.5 kg</td><td>IN</td><td>Outlet 1</td><td>TX-001</td></tr>
+        <tr><td>E-016</td><td style="color:var(--accent3)">WASTAGE</td><td>2.5 kg</td><td>OUT</td><td>Outlet 1</td><td>TX-001</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="rule-box" style="margin-top:0">
+    <strong>Balance check:</strong> Total IN = 99.5 + 58 + 36.5 + 4 + 10 + 3.5 = 211.5 &nbsp;|&nbsp; Total OUT = 60 + 37 + 2 + 2 + 0.5 + 3.25 + 1.8 + 0.5 + 20 + 2.5 = 129.55 &nbsp;|&nbsp; Net stock = 81.95 kg across all locations ✓
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TAB: CG VS LOOSE -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tab-cg-vs-loose" class="tab-panel">
+  <div class="section-label">Comparison</div>
+  <h2 style="margin-bottom:6px">CG items vs loose items</h2>
+  <p style="margin-bottom:28px">Same Thing table. Same state machine. Different quantity model.</p>
+
+  <div class="flow-wrap">
+    <svg width="100%" viewBox="0 0 880 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#5a5955" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <!-- CG SIDE -->
+      <text x="20" y="24" font-family="'DM Mono',monospace" font-size="11" fill="#5a5955" letter-spacing="2">CG ITEM — COCA-COLA × 3</text>
+      <rect x="20" y="36" width="100" height="52" rx="8" fill="rgba(180,169,240,.1)" stroke="rgba(180,169,240,.4)" stroke-width="1"/>
+      <text x="70" y="58" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" font-weight="500" fill="#b4a9f0">Thing 1</text>
+      <text x="70" y="74" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#8a8880">1 can · RECEIVED</text>
+      <rect x="130" y="36" width="100" height="52" rx="8" fill="rgba(180,169,240,.1)" stroke="rgba(180,169,240,.4)" stroke-width="1"/>
+      <text x="180" y="58" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" font-weight="500" fill="#b4a9f0">Thing 2</text>
+      <text x="180" y="74" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#8a8880">1 can · RECEIVED</text>
+      <rect x="240" y="36" width="100" height="52" rx="8" fill="rgba(180,169,240,.1)" stroke="rgba(180,169,240,.4)" stroke-width="1"/>
+      <text x="290" y="58" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" font-weight="500" fill="#b4a9f0">Thing 3</text>
+      <text x="290" y="74" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#8a8880">1 can · SOLD</text>
+      <text x="190" y="118" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#5a5955">3 cans = 3 rows. Stock = COUNT(*)</text>
+
+      <!-- DIVIDER -->
+      <line x1="420" y1="20" x2="420" y2="260" stroke="#2a2b27" stroke-width="1" stroke-dasharray="4 4"/>
+
+      <!-- LOOSE SIDE -->
+      <text x="440" y="24" font-family="'DM Mono',monospace" font-size="11" fill="#5a5955" letter-spacing="2">LOOSE ITEM — RUI FISH 99.5 KG</text>
+      <rect x="440" y="36" width="220" height="60" rx="8" fill="rgba(74,224,184,.08)" stroke="rgba(74,224,184,.35)" stroke-width="1"/>
+      <text x="550" y="58" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" font-weight="500" fill="#4ae0b8">Thing 101</text>
+      <text x="550" y="74" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="11" fill="#8a8880">original_qty: 99.5 kg · ACTIVE</text>
+
+      <rect x="440" y="114" width="100" height="40" rx="6" fill="rgba(180,169,240,.07)" stroke="rgba(180,169,240,.3)" stroke-width="1"/>
+      <text x="490" y="130" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#b4a9f0">E-002</text>
+      <text x="490" y="145" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#8a8880">60kg OUT</text>
+      <rect x="550" y="114" width="100" height="40" rx="6" fill="rgba(180,169,240,.07)" stroke="rgba(180,169,240,.3)" stroke-width="1"/>
+      <text x="600" y="130" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#b4a9f0">E-009</text>
+      <text x="600" y="145" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#8a8880">3.25kg OUT</text>
+
+      <line x1="490" y1="96" x2="490" y2="114" stroke="#5a5955" stroke-width="1" marker-end="url(#arr)"/>
+      <line x1="600" y1="96" x2="600" y2="114" stroke="#5a5955" stroke-width="1" marker-end="url(#arr)"/>
+      <text x="550" y="176" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#5a5955">1 batch = 1 row. Stock = SUM(IN) − SUM(OUT)</text>
+
+      <!-- SHARED -->
+      <text x="190" y="218" text-anchor="middle" font-family="'DM Mono',monospace" font-size="11" fill="#5a5955" letter-spacing="1">SHARED</text>
+      <rect x="40" y="228" width="700" height="38" rx="8" fill="rgba(184,224,74,.04)" stroke="rgba(184,224,74,.15)" stroke-width="1"/>
+      <text x="390" y="252" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="12" fill="#8a8880">Same things table · Same state machine · Same location tracking · Same expiry fields · Same audit trail</text>
+    </svg>
+  </div>
+
+  <div class="card" style="overflow-x:auto">
+    <table class="cmp-table">
+      <thead>
+        <tr><th>Dimension</th><th class="cg">CG item (Coca-Cola)</th><th class="loose">Loose item (Rui Fish)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Things created on receive</td><td class="cg">1 row per unit (5 cans = 5 rows)</td><td class="loose">1 row per batch (100 kg = 1 row)</td></tr>
+        <tr><td>How stock is measured</td><td class="cg">COUNT(*) WHERE state = active</td><td class="loose">SUM(IN events) − SUM(OUT events)</td></tr>
+        <tr><td>State machine runs on</td><td class="cg">Each individual can</td><td class="loose">The batch (coarser states)</td></tr>
+        <tr><td>Transit loss</td><td class="cg">1 can missing → Thing → LOST state</td><td class="loose">2 kg missing → TRANSIT_LOSS event</td></tr>
+        <tr><td>Customer purchase</td><td class="cg">Customer takes 1 can → Thing → SOLD</td><td class="loose">Customer buys 3.25 kg → SOLD event</td></tr>
+        <tr><td>Outlet receiving</td><td class="cg">Each can's Thing state → AT_OUTLET</td><td class="loose">RECEIVED_IN event on same Thing</td></tr>
+        <tr><td>Can it be split?</td><td class="cg">Never. 1 can = 1 Thing always.</td><td class="loose">Always. Any qty as an event.</td></tr>
+        <tr><td>Wastage</td><td class="cg">1 can damaged → Thing → WASTED</td><td class="loose">2 kg damaged → WASTAGE event</td></tr>
+        <tr><td>Transmutation</td><td class="cg">Never. A can stays a can.</td><td class="loose">Whole fish → new SKU Things</td></tr>
+        <tr><td>Correction</td><td class="cg">State correction on Thing row</td><td class="loose">ADJUSTMENT event appended</td></tr>
+        <tr><td>Traceability</td><td class="cg">Thing row = full history</td><td class="loose">TX-001 bridge links input to outputs</td></tr>
+        <tr><td>New Thing on internal transfer</td><td class="cg">No — state updates on existing Thing</td><td class="loose">No — event on existing Thing only</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="hl-box">
+    <div class="hl-box-title">The single most important mental shift</div>
+    <p style="color:var(--muted);font-size:14px">For CG items, the Thing <em>is</em> the stock unit. For loose items, the Thing is the <em>identity</em> of a batch — the events describe the stock. Both live in the same table. Both use the same state machine. The only structural difference is how quantity is handled: counted vs calculated.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TAB: DATABASE -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tab-database" class="tab-panel">
+  <div class="section-label">Schema changes</div>
+  <h2 style="margin-bottom:6px">Database — what changes and what's new</h2>
+  <p style="margin-bottom:28px">All changes are additive. No existing columns are modified. CG item flows are completely unaffected.</p>
+
+  <!-- things table -->
+  <div style="margin-bottom:8px;font-family:var(--font-mono);font-size:12px;color:var(--accent2)">ALTER TABLE things — add columns</div>
+  <div class="card" style="overflow-x:auto;padding:0">
+    <div class="schema-table" style="margin-bottom:0;border:none">
+      <div class="tbl-header">things (existing table — additive changes only)</div>
+      <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px">
+        <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="pk">id</td><td>UUID PK</td><td style="color:var(--hint)">existing</td></tr>
+          <tr><td>product_id</td><td>UUID FK</td><td style="color:var(--hint)">existing</td></tr>
+          <tr><td>state</td><td>VARCHAR(50)</td><td style="color:var(--hint)">existing — coarser for loose items</td></tr>
+          <tr><td>exp_date, mfg_date</td><td>DATE</td><td style="color:var(--hint)">existing</td></tr>
+          <tr><td class="new-col">is_loose</td><td>BOOLEAN</td><td style="color:var(--thing)">NEW — false for CG, true for loose</td></tr>
+          <tr><td class="new-col">original_qty</td><td>NUMERIC(12,4)</td><td style="color:var(--thing)">NEW — immutable after insert. NULL for CG items.</td></tr>
+          <tr><td class="new-col">unit</td><td>VARCHAR(20)</td><td style="color:var(--thing)">NEW — 'kg', 'litre'. NULL for CG items.</td></tr>
+          <tr><td class="new-col">parent_tx_id</td><td>UUID FK</td><td style="color:var(--thing)">NEW — links transmutation output Things to TX record</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- events table -->
+  <div style="margin:20px 0 8px;font-family:var(--font-mono);font-size:12px;color:var(--accent2)">CREATE TABLE thing_quantity_events</div>
+  <div class="card" style="overflow-x:auto;padding:0">
+    <div class="schema-table" style="margin-bottom:0;border:none">
+      <div class="tbl-header">thing_quantity_events (new table)</div>
+      <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px">
+        <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="pk">id</td><td>UUID PK</td><td>gen_random_uuid()</td></tr>
+          <tr><td class="fk">thing_id</td><td>UUID FK → things</td><td>NOT NULL</td></tr>
+          <tr><td>event_type</td><td>VARCHAR(50)</td><td>RECEIVED, PACKED_OUT, RECEIVED_IN, TRANSIT_LOSS, SOLD, WASTAGE, ADJUSTMENT, TRANSMUTATION_IN, TRANSMUTATION_OUT, RETURN</td></tr>
+          <tr><td>qty</td><td>NUMERIC(12,4)</td><td>Always positive. CHECK (qty > 0)</td></tr>
+          <tr><td>direction</td><td>CHAR(3)</td><td>CHECK (direction IN ('IN','OUT'))</td></tr>
+          <tr><td>location_from</td><td>UUID FK → locations</td><td>NULL for pure IN events</td></tr>
+          <tr><td>location_to</td><td>UUID FK → locations</td><td>NULL for pure OUT events</td></tr>
+          <tr><td>exp_date</td><td>DATE</td><td>For sub-lot expiry tracking</td></tr>
+          <tr><td>ref_type</td><td>VARCHAR(50)</td><td>PURCHASE_ORDER, TRANSFER_ORDER, SALE_ORDER, TRANSMUTATION</td></tr>
+          <tr><td class="fk">ref_id</td><td>UUID</td><td>FK to PO / TO / SO / TX as applicable</td></tr>
+          <tr><td>happened_at</td><td>TIMESTAMPTZ</td><td>DEFAULT now() — partition key</td></tr>
+          <tr><td class="fk">created_by</td><td>UUID FK → users</td><td>NOT NULL — full audit trail</td></tr>
+          <tr><td>note</td><td>TEXT</td><td>Optional freetext reason</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- transmutations -->
+  <div style="margin:20px 0 8px;font-family:var(--font-mono);font-size:12px;color:var(--accent2)">CREATE TABLE transmutations</div>
+  <div class="card-grid">
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="schema-table" style="margin-bottom:0;border:none">
+        <div class="tbl-header">transmutations</div>
+        <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px">
+          <tbody>
+            <tr><td class="pk">id</td><td>UUID PK</td></tr>
+            <tr><td>ref</td><td>VARCHAR(100) — human ref e.g. TX-001</td></tr>
+            <tr><td class="fk">location_id</td><td>UUID FK → locations</td></tr>
+            <tr><td class="fk">performed_by</td><td>UUID FK → users</td></tr>
+            <tr><td>performed_at</td><td>TIMESTAMPTZ</td></tr>
+            <tr><td>note</td><td>TEXT</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="schema-table" style="margin-bottom:0;border:none">
+        <div class="tbl-header">transmutation_inputs</div>
+        <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px">
+          <tbody>
+            <tr><td class="pk">id</td><td>UUID PK</td></tr>
+            <tr><td class="fk">transmutation_id</td><td>UUID FK → transmutations</td></tr>
+            <tr><td class="fk">thing_id</td><td>UUID FK → things</td></tr>
+            <tr><td>qty_consumed</td><td>NUMERIC(12,4) NOT NULL</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="schema-table" style="margin-bottom:0;border:none;border-top:1px solid var(--border)">
+        <div class="tbl-header">transmutation_outputs</div>
+        <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px">
+          <tbody>
+            <tr><td class="pk">id</td><td>UUID PK</td></tr>
+            <tr><td class="fk">transmutation_id</td><td>UUID FK → transmutations</td></tr>
+            <tr><td class="fk">thing_id</td><td>UUID FK → things (new Things)</td></tr>
+            <tr><td>qty_produced</td><td>NUMERIC(12,4) NOT NULL</td></tr>
+            <tr><td class="fk">new_product_id</td><td>UUID FK → products</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- snapshot table -->
+  <div style="margin:4px 0 8px;font-family:var(--font-mono);font-size:12px;color:var(--accent2)">CREATE TABLE thing_stock_snapshot — for dashboard performance</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="schema-table" style="margin-bottom:0;border:none">
+      <div class="tbl-header">thing_stock_snapshot</div>
+      <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px">
+        <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="pk">thing_id + location_id + exp_date</td><td>Composite PK</td><td>Unique per batch × location × expiry</td></tr>
+          <tr><td>qty</td><td>NUMERIC(12,4)</td><td>Pre-computed stock — never used for transactions, only dashboards</td></tr>
+          <tr><td>computed_at</td><td>TIMESTAMPTZ</td><td>Rebuilt every 15 minutes via pg_cron</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-label">Indexes</div>
+  <div class="code-block"><span class="cm">-- Primary lookup: all events for a Thing</span>
+<span class="ck">CREATE INDEX</span> <span class="cv">idx_tqe_thing_id</span>     <span class="ck">ON</span> thing_quantity_events(thing_id);
+
+<span class="cm">-- Time-range queries and partition pruning</span>
+<span class="ck">CREATE INDEX</span> <span class="cv">idx_tqe_happened_at</span>  <span class="ck">ON</span> thing_quantity_events(happened_at);
+
+<span class="cm">-- Stock at a specific location</span>
+<span class="ck">CREATE INDEX</span> <span class="cv">idx_tqe_location</span>     <span class="ck">ON</span> thing_quantity_events(location_to, location_from);
+
+<span class="cm">-- FEFO queries — order by earliest expiry</span>
+<span class="ck">CREATE INDEX</span> <span class="cv">idx_tqe_exp_date</span>     <span class="ck">ON</span> thing_quantity_events(exp_date);
+
+<span class="cm">-- Ref lookups (e.g. all events for a transfer order)</span>
+<span class="ck">CREATE INDEX</span> <span class="cv">idx_tqe_ref</span>          <span class="ck">ON</span> thing_quantity_events(ref_type, ref_id);</div>
+
+  <div class="divider"></div>
+  <div class="section-label">Core stock query</div>
+  <div class="code-block"><span class="cm">-- Current stock of product at all locations (with FEFO ordering)</span>
+<span class="ck">SELECT</span>
+  t.product_id,
+  e.exp_date,
+  <span class="cn">COALESCE</span>(e.location_to, e.location_from) <span class="ck">AS</span> location,
+  <span class="cn">SUM</span>(<span class="ck">CASE WHEN</span> e.direction = <span class="cv">'IN'</span>  <span class="ck">THEN</span> e.qty <span class="ck">ELSE</span> 0 <span class="ck">END</span>) -
+  <span class="cn">SUM</span>(<span class="ck">CASE WHEN</span> e.direction = <span class="cv">'OUT'</span> <span class="ck">THEN</span> e.qty <span class="ck">ELSE</span> 0 <span class="ck">END</span>) <span class="ck">AS</span> current_qty
+<span class="ck">FROM</span> thing_quantity_events e
+<span class="ck">JOIN</span> things t <span class="ck">ON</span> t.id = e.thing_id
+<span class="ck">WHERE</span> t.product_id = <span class="cv">'&lt;product-uuid&gt;'</span>
+<span class="ck">GROUP BY</span> t.product_id, e.exp_date, location
+<span class="ck">HAVING</span> <span class="cn">SUM</span>(<span class="ck">CASE WHEN</span> e.direction = <span class="cv">'IN'</span>  <span class="ck">THEN</span> e.qty <span class="ck">ELSE</span> 0 <span class="ck">END</span>) -
+       <span class="cn">SUM</span>(<span class="ck">CASE WHEN</span> e.direction = <span class="cv">'OUT'</span> <span class="ck">THEN</span> e.qty <span class="ck">ELSE</span> 0 <span class="ck">END</span>) > 0
+<span class="ck">ORDER BY</span> e.exp_date <span class="ck">ASC</span>; <span class="cm">-- natural FEFO</span></div>
+
+  <div class="rule-box">
+    <strong>Immutability trigger:</strong> Add a PostgreSQL trigger on the things table that raises an exception if any UPDATE attempts to change original_qty, unit, or product_id on a row where is_loose = true. These fields are write-once.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TAB: EDGE CASES -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tab-edge-cases" class="tab-panel">
+  <div class="section-label">Edge cases</div>
+  <h2 style="margin-bottom:6px">Every known edge case — and how the model handles it</h2>
+  <p style="margin-bottom:28px">These are the situations that break naive implementations. Each one is handled explicitly.</p>
+
+  <div class="card card-warn">
+    <h3>PO qty vs received qty mismatch</h3>
+    <p style="font-size:13px">PO raised for 100 kg. Supplier delivers 99.5 kg.</p>
+    <p style="font-size:13px"><strong style="color:var(--accent)">Handling:</strong> Thing 101 is created with original_qty = 99.5 (what physically arrived). The 0.5 kg shortfall is handled at PO reconciliation level — not in Things. Things only ever record physical reality.</p>
+    <span class="tag tag-thing">Thing created at actual qty</span>
+    <span class="tag tag-none">PO discrepancy handled separately</span>
+  </div>
+
+  <div class="card card-warn">
+    <h3>Internal transfer — outlet receiving never creates a new Thing</h3>
+    <p style="font-size:13px">DC packs 60 kg and sends to Outlet 1. Outlet 1 receives 58 kg.</p>
+    <p style="font-size:13px"><strong style="color:var(--accent)">Handling:</strong> No new Thing. Two events on Thing 101: RECEIVED_IN (58 kg IN) and TRANSIT_LOSS (2 kg OUT). The original Thing retains full traceability back to the supplier PO. Creating a new Thing here would break the chain.</p>
+    <span class="tag tag-event">RECEIVED_IN event</span>
+    <span class="tag tag-warn">TRANSIT_LOSS event</span>
+  </div>
+
+  <div class="card card-warn">
+    <h3>Arbitrary decimal customer qty</h3>
+    <p style="font-size:13px">Customer asks for 3.25 kg, or 0.875 kg, or 1.1 kg.</p>
+    <p style="font-size:13px"><strong style="color:var(--accent)">Handling:</strong> A SOLD event with qty = 3.25. The NUMERIC(12,4) type supports up to 4 decimal places. Stock is recalculated as SUM(IN) − SUM(OUT). No rounding or approximation needed.</p>
+    <span class="tag tag-event">SOLD event with exact decimal</span>
+  </div>
+
+  <div class="card card-warn">
+    <h3>DC remainder — stock stays without an event</h3>
+    <p style="font-size:13px">99.5 kg received. 60 + 37 + 2 packed. That leaves 0.5 kg at DC.</p>
+    <p style="font-size:13px"><strong style="color:var(--accent)">Handling:</strong> No event needed. DC stock = original_qty minus all OUT events at DC. The 0.5 kg is always implied. The system never needs to explicitly "mark" remaining stock — it's derived from the math.</p>
+    <span class="tag tag-none">No event — derived from math</span>
+  </div>
+
+  <div class="card card-warn">
+    <h3>Partial transmutation</h3>
+    <p style="font-size:13px">52.45 kg of whole fish available. Butcher takes only 20 kg to process. The rest continues selling.</p>
+    <p style="font-size:13px"><strong style="color:var(--accent)">Handling:</strong> TRANSMUTATION_OUT event for 20 kg on Thing 101. New Things 102, 103, 104 are born. Thing 101 still has 32.45 kg untouched and continues accepting SOLD events normally. Two SKUs coexist simultaneously.</p>
+    <span class="tag tag-event">TRANSMUTATION_OUT on Thing 101</span>
+    <span class="tag tag-new">New Things 102, 103, 104 born</span>
+  </div>
+
+  <div class="card card-warn">
+    <h3>Processing loss during transmutation</h3>
+    <p style="font-size:13px">20 kg whole fish goes in. Only 17.5 kg comes out as new products. 2.5 kg is bones and offcuts.</p>
+    <p style="font-size:13px"><strong style="color:var(--accent)">Handling:</strong> WASTAGE event of 2.5 kg OUT on Thing 101 (linked to TX-001). Balance: 20 = 17.5 + 2.5. Every gram accounted for. The processing loss is attributed to the original Thing, not the new outputs.</p>
+    <span class="tag tag-warn">WASTAGE event on source Thing</span>
+    <span class="tag tag-none">Balance always closes</span>
+  </div>
+
+  <div class="card card-warn">
+    <h3>Wrong quantity entered — correction</h3>
+    <p style="font-size:13px">Staff entered 60 kg dispatched but it was actually 58 kg.</p>
+    <p style="font-size:13px"><strong style="color:var(--accent)">Handling:</strong> Never edit the existing event. Append an ADJUSTMENT event for +2 kg IN with reason "receiving correction, ref E-002". The event log is append-only forever. Full audit trail preserved. Any query after the adjustment returns the correct stock.</p>
+    <span class="tag tag-event">ADJUSTMENT event appended</span>
+    <span class="tag tag-none">Original event untouched</span>
+  </div>
+
+  <div class="card card-warn">
+    <h3>Sub-lot expiry — same batch, different expiry dates</h3>
+    <p style="font-size:13px">100 kg rice arrives. 60 kg expires June 1, 40 kg expires June 15 (different sub-lots from same supplier shipment).</p>
+    <p style="font-size:13px"><strong style="color:var(--accent)">Handling:</strong> One Thing 101. Two RECEIVED events — one with exp_date = June 1 for 60 kg, one with exp_date = June 15 for 40 kg. FEFO queries order by exp_date ASC and pick the earliest-expiring stock first.</p>
+    <span class="tag tag-event">Two RECEIVED events, one Thing</span>
+    <span class="tag tag-none">FEFO handled naturally</span>
+  </div>
+
+  <div class="card card-warn">
+    <h3>Multiple outlets, one Thing</h3>
+    <p style="font-size:13px">Thing 101 has stock at DC (0.5 kg), Outlet 1 (52.45 kg), and Outlet 2 (36.5 kg) simultaneously.</p>
+    <p style="font-size:13px"><strong style="color:var(--accent)">Handling:</strong> Stock per location is derived by filtering events by location_to or location_from. The snapshot table pre-computes this breakdown every 15 minutes for dashboards. Real-time stock queries hit the event log directly.</p>
+    <span class="tag tag-none">Same Thing, filtered by location</span>
+    <span class="tag tag-event">Snapshot for dashboard performance</span>
+  </div>
+
+  <div class="card card-warn">
+    <h3>Customer return</h3>
+    <p style="font-size:13px">Customer returns 1.5 kg of rice bought earlier.</p>
+    <p style="font-size:13px"><strong style="color:var(--accent)">Handling:</strong> RETURN event on the original Thing — 1.5 kg IN at the outlet. The qty re-enters the system cleanly. If the item is unsaleable (damaged by customer), follow the RETURN with a WASTAGE event.</p>
+    <span class="tag tag-event">RETURN event (IN)</span>
+    <span class="tag tag-warn">Optional WASTAGE if unsaleable</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TAB: SCALABILITY -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tab-scalability" class="tab-panel">
+  <div class="section-label">Scalability &amp; performance</div>
+  <h2 style="margin-bottom:6px">Making it fast as Shwapno grows</h2>
+  <p style="margin-bottom:32px">The event model scales well by design — it is append-only and naturally partitionable. Here is what to do and when.</p>
+
+  <div class="scale-grid">
+    <div class="scale-card">
+      <div class="scale-num">~500</div>
+      <div class="scale-label">events / day (conservative estimate)</div>
+      <div class="scale-desc">50 loose SKUs × DC + 25 outlets, each with 2–4 movements per day. At this volume, no partitioning needed. Plain indexes are sufficient.</div>
+    </div>
+    <div class="scale-card">
+      <div class="scale-num">~180K</div>
+      <div class="scale-label">events / year</div>
+      <div class="scale-desc">Postgres handles tens of millions of rows without partitioning. You have several years of growth before the table needs range partitioning.</div>
+    </div>
+    <div class="scale-card">
+      <div class="scale-num">10M+</div>
+      <div class="scale-label">rows — trigger range partitioning</div>
+      <div class="scale-desc">At this point, partition thing_quantity_events by happened_at monthly. Queries that filter by date automatically use only the relevant partition.</div>
+    </div>
+    <div class="scale-card">
+      <div class="scale-num">15 min</div>
+      <div class="scale-label">snapshot rebuild interval</div>
+      <div class="scale-desc">The thing_stock_snapshot table is rebuilt every 15 minutes via pg_cron. Dashboards and reports hit the snapshot. Only live transactions hit the raw event log.</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-label">Implementation checklist — ordered by priority</div>
+
+  <ul class="checklist">
+    <li>
+      <div class="check-icon p1">1</div>
+      <div><span class="check-label">Add columns to things table (is_loose, original_qty, unit, parent_tx_id)</span><br>One migration, fully additive. No existing rows affected. CG item behaviour unchanged. Ship this first so the table is ready.</div>
+    </li>
+    <li>
+      <div class="check-icon p1">2</div>
+      <div><span class="check-label">Create thing_quantity_events table + all indexes</span><br>This is the foundation of everything. All five indexes should be created on launch — not added later. Include the immutability trigger on things.</div>
+    </li>
+    <li>
+      <div class="check-icon p1">3</div>
+      <div><span class="check-label">Build receiving flow for loose items (GRN)</span><br>User enters batch weight at receiving dock. System creates 1 Thing + 1 RECEIVED event. This unblocks operations immediately.</div>
+    </li>
+    <li>
+      <div class="check-icon p2">4</div>
+      <div><span class="check-label">Build FEFO stock query and transfer packing logic</span><br>Before packing a transfer, the app queries stock by exp_date ASC and picks the earliest-expiring batch first. Critical for perishables.</div>
+    </li>
+    <li>
+      <div class="check-icon p2">5</div>
+      <div><span class="check-label">Build transfer confirmation + transit loss recording</span><br>When outlet confirms receipt, app writes RECEIVED_IN and TRANSIT_LOSS events. Transfer order receives actual_received_qty for reconciliation.</div>
+    </li>
+    <li>
+      <div class="check-icon p2">6</div>
+      <div><span class="check-label">Build sale event flow at outlet POS</span><br>Customer weighs item, POS writes SOLD event. Any decimal qty supported. Outlet stock recalculated on next query.</div>
+    </li>
+    <li>
+      <div class="check-icon p2">7</div>
+      <div><span class="check-label">Build wastage and adjustment event flows</span><br>Wastage logged by store manager. Adjustments logged by supervisor with mandatory reason text. Append-only — no edits.</div>
+    </li>
+    <li>
+      <div class="check-icon p3">8</div>
+      <div><span class="check-label">Create thing_stock_snapshot + pg_cron rebuild job</span><br>Simple materialized view pattern. Rebuild every 15 minutes. All dashboard and reporting queries point here, not at the event log directly.</div>
+    </li>
+    <li>
+      <div class="check-icon p3">9</div>
+      <div><span class="check-label">Build transmutation flow + transmutation tables</span><br>Most complex feature. Requires UI for butcher to log outputs and weights. Create transmutations, transmutation_inputs, transmutation_outputs tables. Ship last — can be manual-entry initially.</div>
+    </li>
+    <li>
+      <div class="check-icon p3">10</div>
+      <div><span class="check-label">Add range partitioning on thing_quantity_events by happened_at</span><br>Not needed at launch. Add when table exceeds 5–10M rows. pg_partman can automate monthly partition creation.</div>
+    </li>
+  </ul>
+
+  <div class="divider"></div>
+  <div class="section-label">Query performance rules</div>
+
+  <div class="card-grid">
+    <div class="card-sm card-thing">
+      <h3 style="font-size:14px">Live stock queries</h3>
+      <p style="font-size:13px">Always filter by thing_id or product_id + location. Never do a full table scan. The idx_tqe_thing_id index makes per-batch queries fast even at millions of rows.</p>
+    </div>
+    <div class="card-sm card-event">
+      <h3 style="font-size:14px">Dashboard / reports</h3>
+      <p style="font-size:13px">Always hit thing_stock_snapshot — never the raw event table. The snapshot is rebuilt every 15 min. For end-of-day reports, rebuild on-demand before the report runs.</p>
+    </div>
+    <div class="card-sm card-new">
+      <h3 style="font-size:14px">FEFO picking</h3>
+      <p style="font-size:13px">Order by exp_date ASC in the stock query. The idx_tqe_exp_date index makes this fast. Always use the live event table (not snapshot) for picking to avoid stale data.</p>
+    </div>
+    <div class="card-sm card-warn">
+      <h3 style="font-size:14px">Audit / traceability</h3>
+      <p style="font-size:13px">Queries that trace a transmutation chain (what did TX-001 produce? where did Thing 102 come from?) are rare and can be slow. No index optimisation needed — these are investigative queries.</p>
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <strong>Architect's note:</strong> The event log is append-only by design. This means you can safely add read replicas and point all dashboard/report traffic at replicas, keeping the primary Postgres instance free for live transaction writes only. This is the single highest-impact performance improvement at scale.
+  </div>
+</div>
+
+<footer>
+  Shwapno WMS · Loose Item Inventory RFC · Prepared for engineering &amp; product review
+</footer>
+
+<script>
+// ── TAB SWITCHING ──
+function showTab(id){
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
+  document.getElementById('tab-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ── STEPPER DATA ──
+var S=[
+  {label:"Purchase order",op:"PO-001 raised: 100 kg Rui Fish from supplier",tags:["none"],
+   note:"No Thing is created yet. Things are only born when goods physically arrive. The PO lives in its own table.",
+   edge:null,existing:[],news:[]},
+  {label:"DC receives 99.5 kg",op:"Supplier delivers 99.5 kg — short by 0.5 kg vs PO",tags:["thing","event"],
+   note:"Thing 101 is born — the only Thing row for this entire batch. original_qty = 99.5 (what arrived, not what was ordered). The first event records the arrival.",
+   edge:{l:"Edge case — PO vs received qty",t:"PO was 100 kg, received 99.5 kg. The shortfall is reconciled at PO level — not in Things. Things only record physical reality."},
+   existing:[],
+   news:[
+     {type:"t",id:"Thing 101",fields:["product: Rui Fish","original_qty: 99.5 kg","unit: kg","exp: 08 Apr 2026"],s:"RECEIVED",sc:"s-rx"},
+     {type:"e",id:"Event E-001",fields:["thing_id: 101","type: RECEIVED","qty: 99.5 kg IN","location: DC-BIN-01","ref: PO-001"],s:null}
+   ]},
+  {label:"DC packs for outlets",op:"60 kg → Outlet 1 · 37 kg → Outlet 2 · 2 kg wastage at DC",tags:["event"],
+   note:"Thing 101 is NOT recreated. Its state changes to DISPATCHING. Three event rows written — one per movement. The 0.5 kg remaining at DC is derived (99.5−60−37−2), never stored.",
+   edge:{l:"Edge case — DC remainder needs no event",t:"0.5 kg stays at DC but no event needed. Stock at DC = original_qty minus all OUT events at DC. The remainder is always implied."},
+   existing:[{type:"t",id:"Thing 101",fields:["original_qty: 99.5 kg"],s:"DISPATCHING",sc:"s-dp"}],
+   news:[
+     {type:"e",id:"Event E-002",fields:["thing_id: 101","type: PACKED_OUT","qty: 60 kg OUT","DC-BIN-01 → Outlet 1","ref: TO-001"],s:null},
+     {type:"e",id:"Event E-003",fields:["thing_id: 101","type: PACKED_OUT","qty: 37 kg OUT","DC-BIN-01 → Outlet 2","ref: TO-002"],s:null},
+     {type:"e",id:"Event E-004",fields:["thing_id: 101","type: WASTAGE","qty: 2 kg OUT","DC-BIN-01","note: damaged"],s:null}
+   ]},
+  {label:"Outlet 1 receives — transit loss",op:"Outlet 1 gets 58 kg · 2 kg lost in transit (60 packed)",tags:["event"],
+   note:"No new Thing created. Internal transfers never create new Things — only supplier POs do. Two events on Thing 101: what arrived and what was lost.",
+   edge:{l:"Edge case — internal transfer rule",t:"Outlet receiving is always events on the existing Thing. This keeps full traceability back to the original supplier purchase."},
+   existing:[{type:"t",id:"Thing 101",fields:["original_qty: 99.5 kg"],s:"PARTIALLY_DISPATCHED",sc:"s-dp"}],
+   news:[
+     {type:"e",id:"Event E-005",fields:["thing_id: 101","type: RECEIVED_IN","qty: 58 kg IN","location: Outlet 1","ref: TO-001"],s:null},
+     {type:"e",id:"Event E-006",fields:["thing_id: 101","type: TRANSIT_LOSS","qty: 2 kg OUT","DC → Outlet 1","ref: TO-001"],s:null}
+   ]},
+  {label:"Outlet 2 receives — transit loss",op:"Outlet 2 gets 36.5 kg · 0.5 kg lost in transit (37 packed)",tags:["event"],
+   note:"Same pattern. Still Thing 101. Two more events. State becomes FULLY_DISPATCHED — all packed qty is now accounted for.",
+   edge:{l:"Edge case — multiple outlets, one Thing",t:"Both outlets track movements on the same Thing 101. Stock per location is calculated by filtering events by location."},
+   existing:[{type:"t",id:"Thing 101",fields:["original_qty: 99.5 kg"],s:"FULLY_DISPATCHED",sc:"s-dp"}],
+   news:[
+     {type:"e",id:"Event E-007",fields:["thing_id: 101","type: RECEIVED_IN","qty: 36.5 kg IN","location: Outlet 2","ref: TO-002"],s:null},
+     {type:"e",id:"Event E-008",fields:["thing_id: 101","type: TRANSIT_LOSS","qty: 0.5 kg OUT","DC → Outlet 2","ref: TO-002"],s:null}
+   ]},
+  {label:"Customers buy at Outlet 1",op:"3 customers buy 3.25 kg · 1.8 kg · 0.5 kg",tags:["event"],
+   note:"No new Thing. Each sale is one event on Thing 101. Any decimal works. Outlet 1 stock = 58 − 3.25 − 1.8 − 0.5 = 52.45 kg. Derived, never stored.",
+   edge:{l:"Edge case — any decimal qty",t:"A customer can buy 0.375 kg. That is just an event with qty: 0.375. Unlike CG items where you count rows, loose stock is always a SUM."},
+   existing:[{type:"t",id:"Thing 101",fields:["original_qty: 99.5 kg","O1 stock: 52.45 kg (derived)"],s:"SELLING",sc:"s-sl"}],
+   news:[
+     {type:"e",id:"Event E-009",fields:["thing_id: 101","type: SOLD","qty: 3.25 kg OUT","Outlet 1","ref: SO-001"],s:null},
+     {type:"e",id:"Event E-010",fields:["thing_id: 101","type: SOLD","qty: 1.8 kg OUT","Outlet 1","ref: SO-002"],s:null},
+     {type:"e",id:"Event E-011",fields:["thing_id: 101","type: SOLD","qty: 0.5 kg OUT","Outlet 1","ref: SO-003"],s:null}
+   ]},
+  {label:"Transmutation starts",op:"Butcher takes 20 kg of whole fish at Outlet 1 to process",tags:["event"],
+   note:"One event on Thing 101 records that 20 kg left for transmutation TX-001. State becomes TRANSMUTING. The remaining 32.45 kg is still available.",
+   edge:{l:"Edge case — partial transmutation",t:"Only 20 kg of the 52.45 kg available is transmuted. The rest (32.45 kg) stays on Thing 101 and continues selling normally."},
+   existing:[{type:"t",id:"Thing 101",fields:["original_qty: 99.5 kg","O1 available: 32.45 kg still untouched"],s:"TRANSMUTING",sc:"s-tm"}],
+   news:[{type:"e",id:"Event E-012",fields:["thing_id: 101","type: TRANSMUTATION_OUT","qty: 20 kg OUT","Outlet 1","ref: TX-001"],s:null}]},
+  {label:"New Things born — transmutation",op:"TX-001 produces Things 102, 103, 104 + 2.5 kg processing loss",tags:["thing","event","new"],
+   note:"Three new Thing rows created. Each gets a TRANSMUTATION_IN event. Processing loss (2.5 kg) is WASTAGE on Thing 101. TX-001 bridges 101 → 102, 103, 104.",
+   edge:{l:"Edge case — processing loss",t:"20 kg in, 17.5 kg out as new Things. 2.5 kg (bones) is WASTAGE on Thing 101. Balance: 20 = 17.5 + 2.5 kg."},
+   existing:[{type:"t",id:"Thing 101",fields:["original_qty: 99.5 kg","20 kg transmuted via TX-001"],s:"TRANSMUTED (partial)",sc:"s-td"}],
+   news:[
+     {type:"n",id:"Thing 102 (NEW)",fields:["product: Rui Fish Head","original_qty: 4 kg","from: TX-001"],s:"AVAILABLE",sc:"s-av"},
+     {type:"n",id:"Thing 103 (NEW)",fields:["product: Rui Fish Fillet","original_qty: 10 kg","from: TX-001"],s:"AVAILABLE",sc:"s-av"},
+     {type:"n",id:"Thing 104 (NEW)",fields:["product: Rui Fish Tail","original_qty: 3.5 kg","from: TX-001"],s:"AVAILABLE",sc:"s-av"},
+     {type:"e",id:"Event E-013",fields:["thing_id: 102","type: TRANSMUTATION_IN","qty: 4 kg IN","ref: TX-001"],s:null},
+     {type:"e",id:"Event E-014",fields:["thing_id: 103","type: TRANSMUTATION_IN","qty: 10 kg IN","ref: TX-001"],s:null},
+     {type:"e",id:"Event E-015",fields:["thing_id: 104","type: TRANSMUTATION_IN","qty: 3.5 kg IN","ref: TX-001"],s:null},
+     {type:"e",id:"Event E-016",fields:["thing_id: 101","type: WASTAGE","qty: 2.5 kg OUT","note: processing loss","ref: TX-001"],s:null}
+   ]},
+  {label:"End of day — full picture",op:"All Thing rows and their current stock",tags:["none"],
+   note:"4 Thing rows exist. Every kg is accounted for. Stock is always derived from events. Corrections are ADJUSTMENT events — no row is ever edited or deleted.",
+   edge:{l:"Edge case — wrong entry correction",t:"Never edit a row. Append an ADJUSTMENT event (positive or negative) with a reason. The log is append-only — complete audit trail forever."},
+   existing:[
+     {type:"t",id:"Thing 101",fields:["Rui Fish · 99.5 kg","DC: 0.5 kg · O1: 32.45 kg · O2: 36.5 kg"],s:"ACTIVE",sc:"s-ac"},
+     {type:"n",id:"Thing 102",fields:["Rui Fish Head · 4 kg","O1: 4 kg available"],s:"AVAILABLE",sc:"s-av"},
+     {type:"n",id:"Thing 103",fields:["Rui Fish Fillet · 10 kg","O1: 10 kg available"],s:"AVAILABLE",sc:"s-av"},
+     {type:"n",id:"Thing 104",fields:["Rui Fish Tail · 3.5 kg","O1: 3.5 kg available"],s:"AVAILABLE",sc:"s-av"}
+   ],
+   news:[]}
+];
+
+var cur=0;
+function rowCls(t){return t==='t'?'rt':t==='n'?'rn':'re';}
+function render(){
+  var s=S[cur];
+  document.getElementById('ctr').textContent=(cur+1)+' / '+S.length;
+  var d=document.getElementById('dots');
+  d.innerHTML=S.map(function(_,i){return'<button class="step-dot'+(i===cur?' on':'')+'" onclick="jump('+i+')" title="'+S[i].label+'"></button>';}).join('');
+  var tags=s.tags.map(function(t){
+    if(t==='thing') return '<span class="tag tag-thing">Thing created</span>';
+    if(t==='event') return '<span class="tag tag-event">Event created</span>';
+    if(t==='new')   return '<span class="tag tag-new">New Thing born</span>';
+    return '<span class="tag tag-none">No DB write</span>';
+  }).join('');
+  var existHtml='';
+  if(s.existing.length){
+    existHtml='<div class="sec-lbl">Existing rows — state updated</div><div class="db-rows">'+
+    s.existing.map(function(r){
+      return'<div class="db-row '+rowCls(r.type)+'"><div class="rid">'+r.id+'</div>'+
+      r.fields.map(function(f){return'<div class="rf">'+f+'</div>';}).join('')+
+      (r.s?'<div class="rs '+r.sc+'">state: '+r.s+'</div>':'')+
+      '</div>';
+    }).join('')+'</div>';
+  }
+  var newHtml='';
+  if(s.news.length){
+    newHtml='<div class="sec-lbl">New rows written this step</div><div class="db-rows">'+
+    s.news.map(function(r){
+      return'<div class="db-row '+rowCls(r.type)+'"><div class="rid">'+r.id+'</div>'+
+      r.fields.map(function(f){return'<div class="rf">'+f+'</div>';}).join('')+
+      (r.s?'<div class="rs '+r.sc+'">state: '+r.s+'</div>':'')+
+      '</div>';
+    }).join('')+'</div>';
+  }
+  var edgeHtml=s.edge?'<div class="step-edge"><span class="step-edge-lbl">'+s.edge.l+': </span>'+s.edge.t+'</div>':'';
+  document.getElementById('step-content').innerHTML=
+    '<div class="step-card">'+
+    '<div class="step-title">'+s.label+'</div>'+
+    '<div class="step-op">'+s.op+'</div>'+
+    '<div>'+tags+'</div>'+
+    existHtml+newHtml+
+    '<div class="step-note">'+s.note+'</div>'+
+    edgeHtml+
+    '</div>';
+  document.getElementById('bp').disabled=cur===0;
+  document.getElementById('bn').disabled=cur===S.length-1;
+}
+function go(d){cur=Math.max(0,Math.min(S.length-1,cur+d));render();}
+function jump(i){cur=i;render();}
+render();
+</script>
+</body>
+</html>
